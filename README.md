@@ -1,183 +1,346 @@
-Aquí tienes el documento de tu proyecto reorganizado, con una estructura mucho más limpia, profesional y visualmente atractiva, ideal para una entrega académica de ingeniería. Se optimizó la jerarquía, se consolidaron los datos en tablas estructuradas y se resaltaron los puntos clave para mejorar la lectura.
 
----
+# Comercial Nova WordPress AWS con almacenamiento estático en S3
 
-# Informe Técnico: Implementación de WordPress en AWS
-
-**Caso de Estudio:** Portal Web Corporativo - Comercial Nova
-
-**Curso:** Virtualización de Servicios Tecnológicos
-
----
-
-## 1. Datos del Proyecto
+## 1. Datos generales
 
 | Campo | Detalle |
-| --- | --- |
-| **Estudiante** | Moises Joaquin Mestas Maque |
-| **Plataforma** | AWS Academy |
-| **Región AWS** | US East (Norte de Virginia) / `us-east-1` |
-| **Entorno** | Laboratorio Académico |
+|---|---|
+| Proyecto | Comercial Nova WordPress AWS |
+| Curso | Virtualización de Servicios Tecnológicos |
+| Plataforma | Amazon Web Services |
+| Entorno | AWS Academy |
+| Región | US East (Norte de Virginia) / us-east-1 |
+| Aplicación | WordPress |
+| Base de datos | Amazon RDS for MySQL |
+| Almacenamiento estático | Amazon S3 |
 
 ---
 
-## 2. Descripción del Problema y Alcance
+## 2. Problema planteado
 
-### El Desafío
+La empresa Comercial Nova requiere implementar un portal web corporativo y de contenidos utilizando WordPress en la nube.
 
-**Comercial Nova** requiere el despliegue de un nuevo portal web corporativo y de contenidos utilizando **WordPress**. El objetivo primordial es migrar hacia una infraestructura en la nube que garantice altos estándares de **disponibilidad, seguridad, escalabilidad** y un estricto **control de costos** operativos.
-
-### Alcance de la Solución
-
-Para cumplir con los requerimientos, se diseñó e implementó una arquitectura funcional en AWS que abarca:
-
-* **Cómputo de alta disponibilidad:** Despliegue automatizado mediante un grupo de escalado.
-* **Red segmentada:** Infraestructura aislada mediante subredes públicas y privadas.
-* **Persistencia de datos:** Base de datos relacional administrada y almacenamiento de objetos para archivos estáticos.
-* **Seguridad y Monitoreo:** Control estricto de accesos a nivel de red y políticas de alertas operacionales.
-* **Gestión Financiera:** Estimación y proyección de costos mensuales/anuales.
+La solución debe mejorar la disponibilidad, seguridad, escalabilidad, monitoreo y control de costos. Además, como requisito de la variante del caso final, los archivos estáticos de WordPress, como imágenes, documentos PDF y otros assets, deben almacenarse y servirse desde Amazon S3.
 
 ---
 
-## 3. Arquitectura del Sistema
+## 3. Objetivo del proyecto
 
-La arquitectura distribuye el tráfico web entrante a través de un balanceador de carga hacia múltiples servidores de aplicación, aislando la base de datos en una capa privada.
+Implementar una arquitectura funcional de WordPress en AWS que incluya:
 
-### Flujo General del Tráfico
+- Capa de aplicación en Amazon EC2.
+- Base de datos administrada en Amazon RDS.
+- Balanceo de carga mediante Application Load Balancer.
+- Alta disponibilidad mediante Auto Scaling Group.
+- Almacenamiento estático en Amazon S3.
+- Seguridad mediante VPC, subredes y Security Groups.
+- Monitoreo con Amazon CloudWatch.
+- Estimación y optimización de costos.
+
+---
+
+## 4. Arquitectura implementada
+
+La solución se implementó en una arquitectura por capas:
 
 ```text
-[ Usuario / Internet ]
-          │
-          ▼
-[ Application Load Balancer ] (Público)
-          │
-          ▼
-[ Auto Scaling Group ] (Mín: 2, Máx: 4)
-   ├── EC2 WordPress Instancia 1 (Subred Pública A)
-   └── EC2 WordPress Instancia 2 (Subred Pública B)
-          │
-          ▼
-[ Amazon RDS MySQL ] (Privado)
+Usuario → Internet → Application Load Balancer → EC2 WordPress → Amazon RDS MySQL
+                                                ↘ Amazon S3
+````
 
+Diagrama de arquitectura:
+
+```text
+arquitectura/diagrama.png
 ```
 
-> **Servicios Complementarios de Soporte:**
-> * **Amazon S3:** Respaldo y almacenamiento de elementos multimedia.
-> * **AWS IAM (LabRole):** Gestión de políticas y permisos de las instancias.
-> * **Amazon CloudWatch:** Monitoreo y alertas basadas en infraestructura.
-> 
-> 
+Documentación técnica:
+
+```text
+arquitectura/justificacion_arquitectura.md
+```
 
 ---
 
-## 4. Mapeo de Servicios y Recursos Creados
+## 5. Servicios AWS utilizados
 
-### Infraestructura de Red y Cómputo
-
-| Servicio AWS | Propósito en la Solución | Recurso Creado (`Name Tag`) |
-| --- | --- | --- |
-| **Amazon VPC** | Red virtual principal aislada. | `nova-wp-vpc` |
-| **Subnets** | Segmentación por zonas de disponibilidad (AZ). | `nova-public-a`, `nova-public-b`<br>
-
-<br>`nova-private-a`, `nova-private-b` |
-| **Internet Gateway** | Salida a internet para el ALB y las EC2. | *(Creado y asociado a la VPC)* |
-| **Route Tables** | Enrutamiento de subredes públicas hacia el IGW. | *(Configurado para capas públicas)* |
-| **Amazon EC2** | Servidores de aplicación (Apache, PHP, WordPress). | Instancias dinámicas mediante ASG |
-| **Launch Template** | Plantilla de configuración para el despliegue EC2. | `nova-wp-lt` |
-| **Auto Scaling Group** | Elasticidad de instancias (Deseada: 2, Mín: 2, Máx: 4). | `nova-wp-asg` |
-| **Application LB** | Distribución de tráfico HTTP balanceado. | `nova-wp-alb` |
-| **Target Group** | Registro y Health Checks de instancias activas. | `nova-wp-tg` |
-
-### Almacenamiento, Base de Datos y Monitoreo
-
-| Servicio AWS | Propósito en la Solución | Recurso Creado (`Name Tag`) |
-| --- | --- | --- |
-| **Amazon RDS** | Base de datos administrada MySQL para WordPress. | `nova-wp-db` |
-| **Amazon S3** | Almacenamiento de evidencias, logs y respaldos. | *(Bucket configurado)* |
-| **CloudWatch** | Panel centralizado de métricas operacionales. | `nova-wp-dashboard` |
-| **CloudWatch Alarms** | Alerta de consumo de cómputo crítico (>70% CPU). | `nova-alarm-ec2-cpu-high` |
+| Servicio                    | Uso dentro de la solución                |
+| --------------------------- | ---------------------------------------- |
+| Amazon VPC                  | Red principal del proyecto               |
+| Subnets públicas y privadas | Segmentación de red                      |
+| Internet Gateway            | Acceso a Internet para recursos públicos |
+| Amazon EC2                  | Servidores WordPress                     |
+| Launch Template             | Plantilla de creación de instancias      |
+| Auto Scaling Group          | Alta disponibilidad y autohealing        |
+| Application Load Balancer   | Distribución de tráfico HTTP             |
+| Amazon RDS for MySQL        | Base de datos administrada               |
+| Amazon S3                   | Almacenamiento de archivos estáticos     |
+| IAM / LabRole               | Permisos del entorno AWS Academy         |
+| Amazon CloudWatch           | Monitoreo y alarmas                      |
+| AWS Pricing Calculator      | Estimación de costos                     |
 
 ---
 
-## 5. Accesos y Validación del Sitio
+## 6. Recursos principales implementados
 
-El correcto funcionamiento de la plataforma se encuentra validado y accesible a través de los siguientes endpoints:
+| Recurso            | Nombre                          |
+| ------------------ | ------------------------------- |
+| VPC                | nova-wp-vpc                     |
+| Subred pública A   | nova-public-a                   |
+| Subred pública B   | nova-public-b                   |
+| Subred privada A   | nova-private-a                  |
+| Subred privada B   | nova-private-b                  |
+| Security Group ALB | nova-sg-alb                     |
+| Security Group EC2 | nova-sg-ec2                     |
+| RDS                | nova-wp-db                      |
+| Bucket S3          | nova-wp-storage-moises-20260702 |
+| Launch Template    | nova-wp-lt                      |
+| Auto Scaling Group | nova-wp-asg                     |
+| Load Balancer      | nova-wp-alb                     |
+| Target Group       | nova-wp-tg                      |
+| Dashboard          | nova-wp-dashboard               |
 
-* **URL Pública del Portal (WordPress):**
-[http://nova-wp-alb-1031980542.us-east-1.elb.amazonaws.com/](http://nova-wp-alb-1031980542.us-east-1.elb.amazonaws.com/)
-* **URL de Validación del Balanceador (Health Check):**
-[http://nova-wp-alb-1031980542.us-east-1.elb.amazonaws.com/health.html](http://nova-wp-alb-1031980542.us-east-1.elb.amazonaws.com/health.html)
+Inventario completo:
 
-### Evidencias Documentadas
-
-1. Despliegue exitoso de la interfaz de instalación y panel de administración de WordPress mediante el DNS del ALB.
-2. Publicación de entrada de prueba en el sitio web de manera persistente.
-3. Target Group reportando **2 instancias EC2 en estado "Healthy"**.
-4. Gráficas operacionales activas en el Dashboard de CloudWatch.
-
----
-
-## 6. Pilares Operacionales de la Infraestructura
-
-### A. Seguridad Aplicada (`Security Groups` e `IAM`)
-
-* **Capa de Aplicación Protegida:** Las instancias EC2 aceptan tráfico web (HTTP) **únicamente** si proviene del Security Group asignado al Application Load Balancer (`nova-sg-alb`).
-* **Aislamiento de Base de Datos:** Amazon RDS está configurado como no público y solo acepta conexiones en el puerto 3306 provenientes del Security Group de las EC2 (`nova-sg-ec2`).
-* **Acceso Administrativo Restringido:** El acceso por SSH hacia las instancias quedó limitado exclusivamente a la dirección IP pública del estudiante.
-* **Principio de Menor Privilegio:** Se utilizó el rol estructurado `LabRole` provisto por AWS Academy, mitigando el uso de credenciales de usuario raíz (`root`).
-* **Resguardo de Objetos:** El bucket de Amazon S3 se configuró con el bloqueo estricto de acceso público.
-
-### B. Alta Disponibilidad y Escalabilidad
-
-* **Tolerancia a Fallos:** Las instancias EC2 se distribuyen en Zonas de Disponibilidad distintas (us-east-1a y us-east-1b). Si una zona o instancia falla, el tráfico se redirige inmediatamente a la activa.
-* **Escalado Dinámico:** El Auto Scaling Group incrementará la cantidad de servidores hasta un máximo de 4 si la demanda lo requiere, basándose en políticas de consumo de CPU.
-
-### C. Monitoreo y Observabilidad
-
-El cuadro de mando `nova-wp-dashboard` recopila de forma continua los siguientes indicadores:
-
-* **EC2:** Porcentaje de uso del procesador (`CPUUtilization`).
-* **RDS:** Uso de CPU, conexiones simultáneas (`DatabaseConnections`) y almacenamiento remanente (`FreeStorageSpace`).
-* **ALB:** Conteo de hosts sanos (`HealthyHostCount`), volumen de peticiones (`RequestCount`) y tiempos de respuesta (`TargetResponseTime`).
+```text
+aws/inventario_recursos_aws.md
+```
 
 ---
 
-## 7. Análisis Financiero (AWS Pricing Calculator)
+## 7. URL del sitio WordPress
 
-Proyección detallada de costos calculada para la arquitectura propuesta:
+Sitio principal:
 
-| Servicio AWS | Costo Mensual Estimado (USD) |
-| --- | --- |
-| Amazon EC2 | 18.22 |
-| Amazon RDS for MySQL | 14.71 |
-| Elastic Load Balancing (ALB) | 16.45 |
-| Amazon S3 | 0.21 |
-| Amazon CloudWatch | 0.10 |
-| **Costo Mensual Total** | **49.69 USD** |
-| **Costo Anual Proyectado** | **596.28 USD** |
+```text
+http://nova-wp-alb-1031980542.us-east-1.elb.amazonaws.com/
+```
 
-### Estrategias de Optimización Propuestas
+Entrada publicada:
 
-* **Rightsizing Constante:** Mantener el uso de familias económicas (`t2.micro`) mientras las métricas de CloudWatch no superen los umbrales estándar.
-* **Ciclos de Vida en S3:** Implementar reglas para trasladar respaldos antiguos a clases de almacenamiento de menor costo (como *Glacier Instant Retrieval*).
-* **Límites de Escalado:** Restringir el número máximo de instancias en el ASG para evitar sobrecostos por picos de tráfico artificiales.
-* **Políticas de Apagado:** Detener o terminar los recursos una vez concluidas las fases de evaluación académica.
+```text
+http://nova-wp-alb-1031980542.us-east-1.elb.amazonaws.com/index.php/2026/07/03/comercial-nova-implementa-su-portal-en-aws/
+```
+
+Documentación de WordPress:
+
+```text
+wordpress/instalacion_configuracion.md
+wordpress/evidencia_publicacion_contenido.md
+```
 
 ---
 
-## 8. Consideraciones Finales del Proyecto
+## 8. Integración WordPress con Amazon S3
 
-### Limitaciones del Entorno Académico
+Para cumplir el requisito de almacenamiento estático, se configuró WordPress para enviar archivos multimedia hacia Amazon S3 mediante el plugin WP Offload Media Lite.
 
-* Restricción en la edición o creación de roles y políticas personalizadas de IAM debido a los límites de la cuenta de AWS Academy.
-* Uso de protocolo inseguro (HTTP) para fines demostrativos de laboratorio.
+| Elemento           | Detalle                                     |
+| ------------------ | ------------------------------------------- |
+| Bucket             | nova-wp-storage-moises-20260702             |
+| Región             | us-east-1                                   |
+| Plugin             | WP Offload Media Lite                       |
+| Archivos validados | Imagen, PDF y asset adicional               |
+| Función            | Copiar y servir archivos estáticos desde S3 |
 
-### Plan de Mejoras Futuras
+URL S3 validada:
 
-* **Cifrado de Extremo a Extremo:** Implementación de HTTPS mediante la integración de *AWS Certificate Manager (ACM)* en el Load Balancer.
-* **Distribución de Contenido:** Incorporación de *Amazon CloudFront* como CDN para acelerar la carga global y reducir peticiones directas al origen.
-* **Infraestructura como Código (IaC):** Automatización completa del aprovisionamiento de la VPC y los recursos mediante scripts de *Terraform* o *AWS CloudFormation*.
+```text
+https://nova-wp-storage-moises-20260702.s3.us-east-1.amazonaws.com/wp-content/uploads/2026/07/06014746/imagen-nova-150x150.gif
+```
 
-### Lección Aprendida Clave
+Documentación S3:
 
-> La piedra angular para el despliegue exitoso radicó en la correcta articulación de las tablas de enrutamiento con el Internet Gateway. Sin esta vinculación, las instancias EC2 quedan aisladas y el Application Load Balancer es incapaz de completar los Health Checks esenciales para servir la aplicación web.
+```text
+almacenamiento_estatico/configuracion_s3_wordpress.md
+almacenamiento_estatico/evidencia_urls_archivos_s3.md
+```
+
+---
+
+## 9. Seguridad aplicada
+
+La arquitectura aplicó controles básicos de seguridad:
+
+* EC2 recibe tráfico HTTP desde el Security Group del ALB.
+* RDS permite conexiones MySQL 3306 solo desde el Security Group de EC2.
+* RDS no tiene acceso público.
+* SSH fue restringido a la IP del estudiante.
+* S3 fue configurado para servir objetos estáticos de WordPress.
+* IAM se trabajó con el rol disponible en AWS Academy debido a restricciones del laboratorio.
+
+Documentación de seguridad:
+
+```text
+seguridad/matriz_accesos.md
+```
+
+---
+
+## 10. Alta disponibilidad y escalabilidad
+
+La solución implementa alta disponibilidad mediante:
+
+* Dos instancias EC2 para WordPress.
+* Dos subredes públicas en zonas de disponibilidad distintas.
+* Application Load Balancer.
+* Target Group con health check en `/health.html`.
+* Auto Scaling Group con mínimo 2 instancias.
+* Política de escalamiento basada en CPU.
+
+---
+
+## 11. Monitoreo y alertamiento
+
+Se configuró Amazon CloudWatch para monitorear la arquitectura.
+
+| Elemento               | Valor                   |
+| ---------------------- | ----------------------- |
+| Dashboard              | nova-wp-dashboard       |
+| Alarma                 | nova-alarm-ec2-cpu-high |
+| Métrica principal      | CPUUtilization          |
+| Umbral                 | Mayor a 70%             |
+| Servicios monitoreados | EC2, RDS y ALB          |
+
+Documentación de monitoreo:
+
+```text
+monitoreo/alertas_configuradas.md
+```
+
+---
+
+## 12. Costos estimados
+
+La estimación se realizó con AWS Pricing Calculator.
+
+| Servicio               | Costo mensual estimado |
+| ---------------------- | ---------------------: |
+| Amazon EC2             |              18.22 USD |
+| Amazon RDS for MySQL   |              14.71 USD |
+| Elastic Load Balancing |              16.45 USD |
+| Amazon S3              |               0.21 USD |
+| Amazon CloudWatch      |               0.10 USD |
+
+**Costo mensual total estimado:** 49.69 USD
+**Costo anual estimado:** 596.28 USD
+
+Documentación de costos:
+
+```text
+costos/optimizacion_costos.md
+```
+
+---
+
+## 13. Acciones de optimización propuestas
+
+1. Aplicar rightsizing sobre las instancias EC2.
+2. Usar lifecycle en S3 para mover archivos antiguos a clases de menor costo.
+3. Limitar el máximo del Auto Scaling Group.
+4. Usar RDS Single-AZ en ambientes académicos o de prueba.
+5. Apagar o eliminar recursos no utilizados al finalizar el laboratorio.
+
+---
+
+## 14. Evidencias de funcionamiento
+
+Las evidencias principales se encuentran en:
+
+```text
+evidencias/pruebas_funcionamiento.md
+evidencias/capturas_servicios/
+```
+
+Capturas incluidas:
+
+* VPC y subredes.
+* Tabla de rutas pública.
+* Security Groups.
+* EC2 en estado running.
+* Target Group healthy.
+* Auto Scaling Group configurado.
+* RDS disponible.
+* WordPress admin.
+* Entrada publicada.
+* Plugin WP Offload Media Lite.
+* Objetos en S3.
+* URL S3 funcionando.
+* Dashboard CloudWatch.
+* Alarma CloudWatch.
+* Estimación de costos.
+
+---
+
+## 15. Informe final
+
+El informe final del proyecto se encuentra en la raíz del repositorio:
+
+```text
+Informe_Final_Comercial_Nova_WordPress_AWS_S3.pdf
+Informe_Final_Comercial_Nova_WordPress_AWS_S3.docx
+```
+
+El informe contiene la descripción técnica completa, arquitectura, evidencias, costos, problemas encontrados, soluciones aplicadas, conclusiones y lecciones aprendidas.
+
+---
+
+## 16. Problemas encontrados y soluciones
+
+| Problema                                 | Solución aplicada                                                                       |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| Target Group aparecía unhealthy          | Se corrigió la asociación de subredes públicas a la tabla de rutas con Internet Gateway |
+| WordPress no respondía correctamente     | Se validó el health check `/health.html`                                                |
+| RDS no aceptaba conexión desde WordPress | Se permitió MySQL 3306 desde el Security Group de EC2                                   |
+| No se pudo crear rol IAM personalizado   | Se utilizó LabRole por restricciones de AWS Academy                                     |
+| Necesidad de servir archivos desde S3    | Se instaló y configuró WP Offload Media Lite                                            |
+
+---
+
+## 17. Limitaciones conocidas
+
+* El entorno AWS Academy limita algunas acciones IAM, como la creación de roles personalizados.
+* El sitio se desplegó con HTTP; para producción se recomienda HTTPS con AWS Certificate Manager.
+* El bucket S3 permite lectura de objetos estáticos para validar el requisito académico; para producción se recomienda CloudFront con Origin Access Control.
+* RDS se implementó en configuración académica; para producción se recomienda Multi-AZ.
+* La arquitectura fue diseñada para fines académicos y demostrativos.
+
+---
+
+## 18. Mejoras futuras
+
+* Implementar HTTPS con AWS Certificate Manager.
+* Integrar Amazon CloudFront para distribución global de contenido.
+* Usar Origin Access Control para proteger el bucket S3.
+* Crear roles IAM personalizados con permisos mínimos.
+* Automatizar la infraestructura con Terraform o CloudFormation.
+* Implementar backups adicionales y pruebas de restauración.
+* Agregar monitoreo avanzado de logs y métricas de aplicación.
+
+---
+
+## 19. Lecciones aprendidas
+
+Durante el desarrollo del proyecto se aprendió a integrar varios servicios AWS para construir una solución WordPress funcional y escalable. También se reforzó la importancia de configurar correctamente las rutas de red, los Security Groups, la conectividad hacia RDS y el almacenamiento estático en S3.
+
+El caso permitió evidenciar que una solución cloud no solo debe funcionar, sino también estar documentada, monitoreada, protegida y sustentada mediante costos y decisiones técnicas.
+
+---
+
+## 20. Estado final
+
+| Requisito            | Estado     |
+| -------------------- | ---------- |
+| WordPress funcional  | Completado |
+| Mínimo 2 EC2         | Completado |
+| VPC y subredes       | Completado |
+| RDS MySQL            | Completado |
+| S3 estático          | Completado |
+| ALB                  | Completado |
+| Auto Scaling         | Completado |
+| CloudWatch Dashboard | Completado |
+| CloudWatch Alarm     | Completado |
+| Estimación de costos | Completado |
+| Informe PDF          | Completado |
+| Evidencias en GitHub | Completado |
+
